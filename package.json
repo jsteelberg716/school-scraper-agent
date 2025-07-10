@@ -1,0 +1,46 @@
+// server.js
+const express = require('express');
+const puppeteer = require('puppeteer');
+const app = express();
+app.use(express.json());
+
+app.post('/api/fetch-school-data', async (req, res) => {
+  const { username, password, school_url } = req.body;
+
+  // Basic URL validation
+  if (
+    !school_url ||
+    !school_url.startsWith('https://') ||
+    !school_url.includes('.') ||
+    school_url.length < 10
+  ) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid school URL. Please make sure it starts with https:// and is a real site.'
+    });
+  }
+
+  try {
+    const browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+
+    await page.goto(school_url);
+
+    await page.type('#username', username);
+    await page.type('#password', password);
+    await page.click('#loginBtn'); // Update this to match the actual school site
+    await page.waitForNavigation();
+
+    const classes = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('.class-title')).map(el => el.innerText);
+    });
+
+    await browser.close();
+
+    res.json({ success: true, classes });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
+app.listen(3000, () => console.log('✅ Scraper server running on port 3000'));
