@@ -20,18 +20,17 @@ app.post('/api/fetch-school-data', async (req, res) => {
     const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
 
-    // Go to the provided school login URL
     await page.goto(school_url, { waitUntil: 'networkidle' });
 
-    // ✅ Fill in login form with correct selectors
+    // 🧠 Real login form selectors based on UA Shibboleth
     await page.fill('input[name="j_username"]', username);
     await page.fill('input[name="j_password"]', password);
-    await page.click('button[name="_eventId_proceed"]');
+    await page.click('button[type="submit"], input[type="submit"]');
 
-    // ⏳ Wait for post-login redirect or dashboard load
-    await page.waitForTimeout(4000);
+    // ⏳ Wait for redirect or dashboard to load
+    await page.waitForTimeout(3000);
 
-    // 🧪 Simulated scraped data (replace with real logic later)
+    // ✅ Mocked class data until real scraping logic is implemented
     const classes = [
       {
         id: 'class-psyc101',
@@ -59,7 +58,6 @@ app.post('/api/fetch-school-data', async (req, res) => {
       success: true,
       classes,
     });
-
   } catch (err) {
     console.error('❌ Scraping error:', err);
     res.status(500).json({
