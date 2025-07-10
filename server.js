@@ -20,17 +20,18 @@ app.post('/api/fetch-school-data', async (req, res) => {
     const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
 
+    // Go to the provided school login URL
     await page.goto(school_url, { waitUntil: 'networkidle' });
 
-    // 🔐 Replace these with your real school login selectors
-    await page.fill('input[name="username"]', username);
-    await page.fill('input[name="password"]', password);
-    await page.click('button[type="submit"]');
+    // ✅ Fill in login form with correct selectors
+    await page.fill('input[name="j_username"]', username);
+    await page.fill('input[name="j_password"]', password);
+    await page.click('button[name="_eventId_proceed"]');
 
-    // ⏳ Wait for dashboard or redirect
-    await page.waitForTimeout(3000);
+    // ⏳ Wait for post-login redirect or dashboard load
+    await page.waitForTimeout(4000);
 
-    // 📥 Eventually: Scrape real class data here
+    // 🧪 Simulated scraped data (replace with real logic later)
     const classes = [
       {
         id: 'class-psyc101',
@@ -58,6 +59,7 @@ app.post('/api/fetch-school-data', async (req, res) => {
       success: true,
       classes,
     });
+
   } catch (err) {
     console.error('❌ Scraping error:', err);
     res.status(500).json({
