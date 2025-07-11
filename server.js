@@ -1,6 +1,9 @@
+// ✅ FINAL server.js with Ghost Hub forwarding integration
+
 const express = require('express');
 const cors = require('cors');
 const { chromium } = require('playwright');
+const fetch = require('node-fetch');
 
 const app = express();
 app.use(cors());
@@ -10,10 +13,7 @@ app.post('/api/fetch-school-data', async (req, res) => {
   const { username, password, school_url } = req.body;
 
   if (!username || !password || !school_url) {
-    return res.status(400).json({
-      success: false,
-      error: 'Missing required fields',
-    });
+    return res.status(400).json({ success: false, error: 'Missing required fields' });
   }
 
   try {
@@ -22,33 +22,36 @@ app.post('/api/fetch-school-data', async (req, res) => {
 
     await page.goto(school_url, { waitUntil: 'networkidle' });
 
-    // 🌐 Fill in login form (adjust selectors as needed)
-    await page.fill('#username', username);
+    // 🧠 Login selectors for Arizona (update as needed)
+    await page.fill('input[name="j_username"]', username);
     await page.fill('input[name="j_password"]', password);
     await page.click('button[type="submit"]');
 
-    // ⏳ Wait for post-login page to load fully
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000); // Buffer
+    // ⏳ Let login process & redirect
+    await page.waitForTimeout(5000);
 
-    // 🕸️ Get full HTML of the page
+    // 🧱 Grab full raw HTML
     const raw_html = await page.content();
+
+    // 🪄 Send to Ghost Hub
+    await fetch('https://your-crammer-url.com/api/ghost-hub', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: username,
+        raw_html: raw_html
+      })
+    });
 
     await browser.close();
 
-    res.json({
-      success: true,
-      raw_html,
-    });
+    res.json({ success: true, message: 'Scraping and forwarding complete' });
   } catch (err) {
     console.error('❌ Scraping error:', err);
-    res.status(500).json({
-      success: false,
-      error: 'Scraping failed',
-    });
+    res.status(500).json({ success: false, error: 'Scraping failed' });
   }
 });
 
 app.listen(3000, () => {
-  console.log('✅ Playwright scraper running on port 3000');
+  console.log('✅ Playwright scraper with Ghost Hub forwarding running on port 3000');
 });
