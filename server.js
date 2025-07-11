@@ -22,41 +22,23 @@ app.post('/api/fetch-school-data', async (req, res) => {
 
     await page.goto(school_url, { waitUntil: 'networkidle' });
 
-    // 🧠 Real login form selectors based on UA Shibboleth
-    await page.fill('input[name="j_username"]', username);
+    // 🌐 Fill in login form (adjust selectors as needed)
+    await page.fill('#username', username);
     await page.fill('input[name="j_password"]', password);
-    await page.click('button[type="submit"], input[type="submit"]');
+    await page.click('button[type="submit"]');
 
-    // ⏳ Wait for redirect or dashboard to load
-    await page.waitForTimeout(3000);
+    // ⏳ Wait for post-login page to load fully
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(3000); // Buffer
 
-    // ✅ Mocked class data until real scraping logic is implemented
-    const classes = [
-      {
-        id: 'class-psyc101',
-        name: 'Psychology 101',
-        source: 'login',
-        syllabus: [],
-        files: [],
-        assignments: [],
-        color: '#A8DADC',
-      },
-      {
-        id: 'class-math122',
-        name: 'Math 122B',
-        source: 'login',
-        syllabus: [],
-        files: [],
-        assignments: [],
-        color: '#F4A261',
-      },
-    ];
+    // 🕸️ Get full HTML of the page
+    const raw_html = await page.content();
 
     await browser.close();
 
     res.json({
       success: true,
-      classes,
+      raw_html,
     });
   } catch (err) {
     console.error('❌ Scraping error:', err);
